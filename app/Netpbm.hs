@@ -3,6 +3,7 @@ module Netpbm where
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Char (isSpace)
+import Control.Monad
 
 {-
     Types for identifying filetype
@@ -25,10 +26,11 @@ data Image = Image { filetype :: MagicNumber
                    , height :: Int
                    , maxVal :: Int
                    , comments :: [String]
+                   , image :: B.ByteString
                    }
 
 instance Show Image where
-    show (Image mn w h mv cs) = "Type: " ++ (show mn) ++ "\nWidth: " ++(show w) ++
+    show (Image mn w h mv cs _) = "Type: " ++ (show mn) ++ "\nWidth: " ++(show w) ++
         "\n Height: " ++ (show h) ++ "\n Max Value: " ++ (show mv) ++ printComments cs
         where
             printComments :: [String] -> String
@@ -72,4 +74,47 @@ parseComments bytes = let
                                       recurs = parseComments (dropLeadingWhiteSpace rest)
                                   in (C8.unpack comment : fst recurs, snd recurs)
                            otherwise -> ([], bytes)
-                                                   
+
+parseInt :: B.ByteString -> Either String (Int, B.ByteString)
+parseInt bytes = case (C8.readInt bytes) of
+                   Nothing -> Left "Couldn't parse int"
+                   Just result -> Right result
+
+parseDimensions :: B.ByteString -> Either String ((Int,Int), B.ByteString)
+parseDimensions bytes = do
+    --width <- parseInt bytes
+    (width, afterWidth) <- parseInt bytes
+    --height <- parseInt (snd width)
+    (height, afterHeight) <- parseInt bytes
+    --return ((fst width, fst height), snd height)
+    return ((width, height), afterHeight)
+                                               
+parseImage :: B.ByteString -> Either String Image
+parseImage bytes = do
+    magicNum <- parseMagicNumber bytes
+    parseFromMagicNum magicNum
+
+parseFromMagicNum :: (MagicNumber, B.ByteString) -> Either String Image
+parseFromMagicNum (P1, bytes) = parsePBMImage (P1, bytes)
+parseFromMagicNum (P4, bytes) = parsePBMImage (P4, bytes)
+parseFromMagicNum (mn, bytes) = do
+    let afterMn = dropLeadingWhiteSpace bytes
+    let (comments, bytes') = parseComments afterMn
+    let afterComments = dropLeadingWhiteSpace bytes'
+    ((width, height), bytes'') <- parseDimensions afterComments
+    let afterDimensions = dropLeadingWhiteSpace bytes''
+    (maxVal, rest) <- parseInt afterDimensions
+    let image = dropLeadingWhiteSpace rest
+    return $ Image mn width height maxVal comments image
+
+
+--pbms dont have a max value so they get special treatment
+parsePBMImage :: (MagicNumber, B.ByteString) -> Either String Image
+parsePBMImage (mn, bytes) = do
+    let afterMn = dropLeadingWhiteSpace bytes
+    let (comments, bytes') = parseComments afterMn
+    let afterComments = dropLeadingWhiteSpace bytes'
+    ((width, height), rest) <- parseDimensions afterComments
+    let image = dropLeadingWhiteSpace rest
+    return $ Image mn width height 1 comments image
+    
