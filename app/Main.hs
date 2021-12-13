@@ -1,6 +1,8 @@
 module Main where
 
-import Netpbm
+import ParserNetPbm
+import TypesNetPbm
+
 import qualified Data.ByteString as B
 
 main :: IO ()
