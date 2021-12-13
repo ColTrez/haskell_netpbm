@@ -35,6 +35,15 @@ instance Show Image where
             printComments [] = ""
             printComments (x:xs) = (x ++ "\n") ++ printComments xs
 
+{-
+    Parsing functions below
+-}
+
+dropLeadingWhiteSpace :: B.ByteString -> B.ByteString
+dropLeadingWhiteSpace bytes
+  | isSpace (C8.head bytes) = dropLeadingWhiteSpace (B.tail bytes)
+  | otherwise               = bytes
+
 magicNumFromBytes :: B.ByteString -> Either String MagicNumber
 magicNumFromBytes bytes = let
                              prefix = C8.unpack bytes
@@ -54,4 +63,13 @@ parseMagicNumber bytes = let
                          in case mn of
                               Left err -> Left err
                               Right magicNumber -> Right (magicNumber, rest)
-                             
+
+parseComments :: B.ByteString -> ([String], B.ByteString)
+parseComments bytes = let 
+                        firstByte = C8.head bytes
+                      in case firstByte of
+                           '#' -> let (comment, rest) = C8.span (\c -> c /= '\n') bytes
+                                      recurs = parseComments (dropLeadingWhiteSpace rest)
+                                  in (C8.unpack comment : fst recurs, snd recurs)
+                           otherwise -> ([], bytes)
+                                                   
