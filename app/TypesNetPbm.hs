@@ -31,3 +31,12 @@ instance Show Image where
             printComments :: [String] -> String
             printComments [] = ""
             printComments (x:xs) = (x ++ "\n") ++ printComments xs
+
+-- types for input verification
+data FileType = PBM | PGM | PPM
+    deriving Show
+
+data FileMode = RAW | ASCII
+    deriving Show
+
+

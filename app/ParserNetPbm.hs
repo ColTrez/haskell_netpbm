@@ -47,11 +47,8 @@ parseInt bytes = case (C8.readInt bytes) of
 
 parseDimensions :: B.ByteString -> Either String ((Int,Int), B.ByteString)
 parseDimensions bytes = do
-    --width <- parseInt bytes
     (width, afterWidth) <- parseInt bytes
-    --height <- parseInt (snd width)
     (height, afterHeight) <- parseInt bytes
-    --return ((fst width, fst height), snd height)
     return ((width, height), afterHeight)
                                                
 parseImage :: B.ByteString -> Either String Image
@@ -81,4 +78,21 @@ parsePBMImage (mn, bytes) = do
     ((width, height), rest) <- parseDimensions afterComments
     let image = dropLeadingWhiteSpace rest
     return $ Image mn width height 1 comments image
+
+
+-- Functions for parsing input arguments
+parseFileTypeArg :: String -> Either String FileType
+parseFileTypeArg arg
+    | arg == "pbm" = Right PBM
+    | arg == "pgm" = Right PGM
+    | arg == "ppm" = Right PPM
+    | otherwise = Left $ "Error: Filetype \"" ++ arg ++ "\" not recognized, use pbm, pgm, or ppm"
+
+parseFileModeArg :: String -> Either String FileMode
+parseFileModeArg arg
+    | arg == "raw" = Right RAW
+    | arg == "RAW" = Right RAW
+    | arg == "ascii" = Right ASCII
+    | arg == "ASCII" = Right ASCII
+    | otherwise = Left $ "Error: File mode \"" ++ arg ++ "\" not recognized, use raw or ascii"
 
