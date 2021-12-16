@@ -48,7 +48,7 @@ parseInt bytes = case (C8.readInt bytes) of
 parseDimensions :: B.ByteString -> Either String ((Int,Int), B.ByteString)
 parseDimensions bytes = do
     (width, afterWidth) <- parseInt bytes
-    (height, afterHeight) <- parseInt bytes
+    (height, afterHeight) <- parseInt (dropLeadingWhiteSpace afterWidth)
     return ((width, height), afterHeight)
                                                
 parseImage :: B.ByteString -> Either String Image

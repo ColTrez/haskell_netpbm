@@ -4,14 +4,15 @@ import qualified Data.ByteString as B
 
 
 data MagicNumber = P1 | P2 | P3 | P4 | P5 | P6
+    deriving Show
 
-instance Show MagicNumber where
-    show P1 = "P1 - black and white ASCII"
-    show P2 = "P2 - Grayscale ASCII"
-    show P3 = "P3 - RGB ASCII"
-    show P4 = "P4 - black and white RAW"
-    show P5 = "P5 - Grayscale RAW"
-    show P6 = "P6 - RGB RAW"
+prettyPrintMagicNum :: MagicNumber -> String
+prettyPrintMagicNum P1 = "P1 - black and white ASCII"
+prettyPrintMagicNum P2 = "P2 - Grayscale ASCII"
+prettyPrintMagicNum P3 = "P3 - RGB ASCII"
+prettyPrintMagicNum P4 = "P4 - black and white RAW"
+prettyPrintMagicNum P5 = "P5 - Grayscale RAW"
+prettyPrintMagicNum P6 = "P6 - RGB RAW"
 
 
 
@@ -23,8 +24,16 @@ data Image = Image { filetype :: MagicNumber
                    , image :: B.ByteString
                    }
 
+formatImageHeader :: Image -> String
+formatImageHeader image =
+    let magicNum = show $ filetype image
+        dimensions = (show $ width image) ++ " " ++ (show $ height image)
+        maxValue = show $ maxVal image
+        comm = concat $ comments image
+    in concat $ map (++ "\n") [magicNum, comm, dimensions, maxValue] 
+
 instance Show Image where
-    show (Image mn w h mv cs _) = "Type: " ++ (show mn) ++ "\nWidth: " ++(show w) ++
+    show (Image mn w h mv cs _) = "Type: " ++ (prettyPrintMagicNum mn) ++ "\nWidth: " ++(show w) ++
         "\nHeight: " ++ (show h) ++ "\nMax Value: " ++ (show mv) ++
             "\nComments: " ++ (show $ length cs) ++ " comments\n" ++ printComments cs
         where
