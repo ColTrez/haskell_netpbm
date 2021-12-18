@@ -96,3 +96,14 @@ parseFileModeArg arg
     | arg == "ASCII" = Right ASCII
     | otherwise = Left $ "Error: File mode \"" ++ arg ++ "\" not recognized, use raw or ascii"
 
+parseRGBPixel :: B.ByteString -> Maybe (RGBPixel, B.ByteString)
+parseRGBPixel bytes
+    | B.length bytes < 3 = Nothing
+    | otherwise = let [r, g, b] = B.unpack $ B.take 3 bytes
+                  in Just (Pixel r g b, B.drop 3 bytes)
+
+parseRGBPixels :: B.ByteString -> [RGBPixel]
+parseRGBPixels bytes =
+    case parseRGBPixel bytes of
+      Nothing -> []
+      Just (pxl, bytes') -> pxl : (parseRGBPixels bytes')

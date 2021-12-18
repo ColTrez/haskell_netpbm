@@ -1,6 +1,7 @@
 module TypesNetPbm where
 
 import qualified Data.ByteString as B
+import Data.Word
 
 
 data MagicNumber = P1 | P2 | P3 | P4 | P5 | P6
@@ -48,4 +49,4 @@ data FileType = PBM | PGM | PPM
 data FileMode = RAW | ASCII
     deriving Show
 
-
+data RGBPixel = Pixel {red :: Word8, green :: Word8, blue :: Word8}

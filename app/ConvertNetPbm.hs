@@ -1,6 +1,7 @@
 module ConvertNetPbm where
 
 import TypesNetPbm
+import ParserNetPbm
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Word
@@ -8,7 +9,7 @@ import System.IO
 
 
 convertImage :: Image -> FileType -> FileMode -> IO ()
-convertImage img ft fm = let newImage = pgmRawToAscii $ image img
+convertImage img ft fm = let newImage = ppmToPgm $ image img
                              targetType = findTargetMagicNum ft fm
                              newFile = (convertHeader targetType img) newImage
                          in writeImage newFile
@@ -47,8 +48,25 @@ writeImage img = let newFile = "converted.pgm"
                      B.appendFile newFile newImage
 
 
-pgmAsciiToRaw :: B.ByteString -> B.ByteString
-pgmAsciiToRaw = B.pack . (map read) . concat . (map words) . lines . C8.unpack
+asciiToRaw :: B.ByteString -> B.ByteString
+asciiToRaw = B.pack . (map read) . concat . (map words) . lines . C8.unpack
 
-pgmRawToAscii :: B.ByteString -> B.ByteString
-pgmRawToAscii = C8.pack . concat . (map (++ "\n")) . (map show) . B.unpack 
+rawToAscii :: B.ByteString -> B.ByteString
+rawToAscii = C8.pack . concat . (map (++ "\n")) . (map show) . B.unpack 
+
+type GrayPixel = Word8
+
+rgbToGrayPixel :: RGBPixel -> GrayPixel
+rgbToGrayPixel rgb = 
+    let r = fromIntegral $ red rgb
+        g = fromIntegral $ green rgb
+        b = fromIntegral $ blue rgb
+--    in 0
+    in ((r `div` 3) + (g `div` 3) + (b `div` 3))
+
+--assumes raw
+ppmToPgm :: B.ByteString -> B.ByteString
+ppmToPgm ppmImage =
+    let rgbPixels = parseRGBPixels ppmImage
+        greyPixels = map rgbToGrayPixel rgbPixels
+    in B.pack greyPixels
