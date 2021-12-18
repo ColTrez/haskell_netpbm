@@ -9,7 +9,7 @@ import System.IO
 
 
 convertImage :: Image -> FileType -> FileMode -> IO ()
-convertImage img ft fm = let newImage = ppmToPgm $ image img
+convertImage img ft fm = let newImage = pgmToPpm $ image img
                              targetType = findTargetMagicNum ft fm
                              newFile = (convertHeader targetType img) newImage
                          in writeImage newFile
@@ -47,7 +47,6 @@ writeImage img = let newFile = "converted.pgm"
                      writeFile newFile header
                      B.appendFile newFile newImage
 
-
 asciiToRaw :: B.ByteString -> B.ByteString
 asciiToRaw = B.pack . (map read) . concat . (map words) . lines . C8.unpack
 
@@ -61,8 +60,17 @@ rgbToGrayPixel rgb =
     let r = fromIntegral $ red rgb
         g = fromIntegral $ green rgb
         b = fromIntegral $ blue rgb
---    in 0
     in ((r `div` 3) + (g `div` 3) + (b `div` 3))
+
+grayToRGBPixel :: GrayPixel -> RGBPixel
+grayToRGBPixel gray = Pixel gray gray gray
+
+unPixels :: [RGBPixel] -> [Word8]
+unPixels [] = []
+unPixels (p:ps) = let r = red p
+                      g = green p
+                      b = blue p
+                  in (r:g:b:(unPixels ps))
 
 --assumes raw
 ppmToPgm :: B.ByteString -> B.ByteString
@@ -70,3 +78,6 @@ ppmToPgm ppmImage =
     let rgbPixels = parseRGBPixels ppmImage
         greyPixels = map rgbToGrayPixel rgbPixels
     in B.pack greyPixels
+
+pgmToPpm :: B.ByteString -> B.ByteString
+pgmToPpm = B.pack . concat . (map (replicate 3)) . B.unpack 
